@@ -7,7 +7,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 // ---------------------------------------------------------------------------
 // Validate env
 // ---------------------------------------------------------------------------
-const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, ANTHROPIC_API_KEY, SYSTEM_PROMPT_PRIVATE } = process.env;
+const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, ANTHROPIC_API_KEY } = process.env;
 
 if (!DISCORD_BOT_TOKEN || !DISCORD_CLIENT_ID || !ANTHROPIC_API_KEY) {
   console.error('Missing required env vars: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, ANTHROPIC_API_KEY');
@@ -396,29 +396,26 @@ function startTyping(channel) {
 }
 
 // ---------------------------------------------------------------------------
+// System prompt (loaded from files)
+// ---------------------------------------------------------------------------
+const PROMPT_PUBLIC_FILE = path.join(__dirname, 'system-prompt.txt');
+const PROMPT_PRIVATE_FILE = path.join(__dirname, 'system-prompt-private.txt');
+
+function loadFile(filePath) {
+  try { return fs.readFileSync(filePath, 'utf8').trim(); }
+  catch { return ''; }
+}
+
+// ---------------------------------------------------------------------------
 // Call Claude with tool-use agentic loop
 // ---------------------------------------------------------------------------
 function buildSystemPrompt(messageTime) {
   return [
-    'you are claude, an ai assistant for fcc studio — a creative studio with members zach, dan, and leo.',
-    'the studio website is https://fcc.lol.',
-    'you are chatting in the fcc studio discord server.',
+    loadFile(PROMPT_PUBLIC_FILE),
     `the exact time this message was sent is ${messageTime} (UTC). use this as "now" when calculating reminder times.`,
-    'you have tools to search and look up fcc studio projects — use them whenever someone asks about projects.',
-    'you have long-term memory tools: use get_memory at the start of conversations to recall relevant context,',
-    'and use save_memory proactively when users share important facts, preferences, or information worth remembering.',
-    'use delete_memory if asked to forget something.',
-    'you can schedule reminders with set_reminder — use it whenever someone asks to be reminded about something.',
-    'for relative times ("in 2 hours", "tomorrow at noon") calculate from the message timestamp above.',
-    'for absolute times without a timezone ("at 3pm"), ask the user which timezone they mean before setting the reminder.',
-    'always write in all lowercase. never use emoji.',
-    'be concise and conversational. use discord markdown (bold, italics, code blocks) when helpful.',
-    'each user message is prefixed with their discord username so you know who is speaking.',
     memberMentionList(),
-    'when referring to a member by name in your response, always use their discord mention format (<@ID>) instead of just their name.',
-    'if you need to send a very long answer, offer to break it into parts.',
-    SYSTEM_PROMPT_PRIVATE || '',
-  ].filter(Boolean).join(' ');
+    loadFile(PROMPT_PRIVATE_FILE),
+  ].filter(Boolean).join('\n');
 }
 
 async function askClaude(channelId, userTag, userText, messageTime) {
