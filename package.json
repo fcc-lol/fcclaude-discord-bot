@@ -1,5 +1,5 @@
 {
-  "name": "claude-discord-bot",
+  "name": "fcclaude-discord-bot",
   "version": "1.0.0",
   "description": "Discord bot powered by Claude AI — @mention to chat",
   "main": "server.js",
