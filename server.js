@@ -7,7 +7,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 // ---------------------------------------------------------------------------
 // Validate env
 // ---------------------------------------------------------------------------
-const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, ANTHROPIC_API_KEY } = process.env;
+const { DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, ANTHROPIC_API_KEY, SYSTEM_PROMPT_PRIVATE } = process.env;
 
 if (!DISCORD_BOT_TOKEN || !DISCORD_CLIENT_ID || !ANTHROPIC_API_KEY) {
   console.error('Missing required env vars: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, ANTHROPIC_API_KEY');
@@ -417,7 +417,8 @@ function buildSystemPrompt(messageTime) {
     memberMentionList(),
     'when referring to a member by name in your response, always use their discord mention format (<@ID>) instead of just their name.',
     'if you need to send a very long answer, offer to break it into parts.',
-  ].join(' ');
+    SYSTEM_PROMPT_PRIVATE || '',
+  ].filter(Boolean).join(' ');
 }
 
 async function askClaude(channelId, userTag, userText, messageTime) {
