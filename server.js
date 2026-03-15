@@ -175,6 +175,18 @@ async function fetchProject(id) {
   return res.json();
 }
 
+async function fetchProjectsByPerson(person) {
+  const res = await fetch(`https://portfolio-api.fcc.lol/projects/person/${encodeURIComponent(person)}`);
+  if (!res.ok) throw new Error(`no projects found for person: ${person}`);
+  return res.json();
+}
+
+async function fetchProjectsByTag(tag) {
+  const res = await fetch(`https://portfolio-api.fcc.lol/projects/tag/${encodeURIComponent(tag)}`);
+  if (!res.ok) throw new Error(`no projects found for tag: ${tag}`);
+  return res.json();
+}
+
 // ---------------------------------------------------------------------------
 // Claude tools
 // ---------------------------------------------------------------------------
@@ -202,6 +214,28 @@ const TOOLS = [
         id: { type: 'string', description: 'Project ID/slug, e.g. "story-box"' },
       },
       required: ['id'],
+    },
+  },
+  {
+    name: 'get_projects_by_person',
+    description: 'Get all FCC Studio projects by a specific person/member.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        person: { type: 'string', description: 'Person\'s first name, e.g. "leo", "zach", "dan"' },
+      },
+      required: ['person'],
+    },
+  },
+  {
+    name: 'get_projects_by_tag',
+    description: 'Get all FCC Studio projects with a specific tag.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tag: { type: 'string', description: 'Tag to filter by, e.g. "hardware", "raspberry-pi", "3d-printing"' },
+      },
+      required: ['tag'],
     },
   },
   {
@@ -317,6 +351,16 @@ async function runTool(name, input, { channelId, username } = {}) {
   if (name === 'get_project') {
     const p = await fetchProject(input.id);
     return { ...p, url: `https://fcc.lol/${p.id}` };
+  }
+
+  if (name === 'get_projects_by_person') {
+    const projects = await fetchProjectsByPerson(input.person);
+    return projects.map(p => ({ id: p.id, name: p.name, description: p.description, date: p.date, tags: p.tags, url: `https://fcc.lol/${p.id}` }));
+  }
+
+  if (name === 'get_projects_by_tag') {
+    const projects = await fetchProjectsByTag(input.tag);
+    return projects.map(p => ({ id: p.id, name: p.name, description: p.description, date: p.date, credits: p.credits, url: `https://fcc.lol/${p.id}` }));
   }
 
   if (name === 'save_memory') {
